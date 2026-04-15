@@ -1,99 +1,272 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🤖 AI Agent with Adaptive RAG (Node.js + NestJS)
+<img width="600" src="https://wickedhorror.com/wp-content/uploads/2016/12/Gremlins.jpg" />
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# How to use it?
+## 1. Injest the data you have... (Indexing Data)
+>POST - Kukamont is a faraway, enchanted land...<br/>
+>POST - More than 1 million people are currently living in Kukamont...<br/>
+>POST - Kataplah is a very dangerous monster that lives in Kukamont...<br/>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 2. Make any question...
 
-## Description
+>POST - Who's Kataplah?
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ npm install
+```text
+(AI Answer) - Kataplah does not seem to be a well-known figure, celebrity, or a character in popular culture. It is possible that it might be a misspelling, a pseudonym, or a reference to something specific. If you could provide more context about where you encountered the name \"Kataplah\", I may be able to give a more accurate response."
 ```
 
-## Compile and run the project
+The LLM used by the application did not recognize anything about the Kukamont city. That happened because it only searches for resources in LLM. 
+We'll need to explicitly prompt for the agent to use the information we've previously added. It'll trigger the decision to use the  RAG pipeline with a `searchDocument` tool (for semantic search).
 
-```bash
-# development
-$ npm run start
 
-# watch mode
-$ npm run start:dev
+> [!TIP]
+>POST - Who's Kataplah? If you don't know, could you check the external docs?
 
-# production mode
-$ npm run start:prod
+```json
+{
+    "answer": {
+        "answer": " Based on the provided context from the Kukamont Docs, Kataplah is a very dangerous monster that lives in Kukamont.",
+        "usedTool": "searchDocuments",
+        "sources": [
+            {
+                "content": "Kataplah is a very dangerous monster that lives in Kukamont",
+                "title": "Kukamont Docs",
+                "distance": 18.622858321181024
+            },
+            {
+                "content": "Kukamont is a faraway, enchanted land",
+                "title": "Kukamont Docs",
+                "distance": 19.455843497299373
+            },
+            {
+                "content": "More than 1 million people are currently living in Kukamont.",
+                "title": "Kukamont Docs",
+                "distance": 20.51306703517183
+            }
+        ]
+    },
+    "usedTool": "searchDocuments"
+}
 ```
 
-## Run tests
+## About the implementation
+This project implements a **tool-augmented AI agent** capable of dynamically deciding whether to:
 
-```bash
-# unit tests
-$ npm run test
+* Use **Retrieval-Augmented Generation (RAG)** to answer based on internal data
+* Or respond directly using an LLM (without retrieval)
 
-# e2e tests
-$ npm run test:e2e
+---
 
-# test coverage
-$ npm run test:cov
+## 🚀 Overview
+
+Traditional RAG pipelines always retrieve context before answering.
+
+This project goes a step further by implementing an **adaptive agent** that:
+
+* Decides when retrieval is necessary
+* Uses tools (functions) dynamically
+* Combines semantic search with LLM reasoning
+
+---
+
+## 🧠 Architecture
+
+```text
+User Question
+      ↓
+   AI Agent (LLM)
+      ↓
+ ┌───────────────┐
+ │ Decision Step │
+ └───────────────┘
+      ↓
+ ┌───────────────┬────────────────┐
+ │ Use Tool      │ Direct Answer  │
+ │ (RAG)         │ (LLM only)     │
+ └───────────────┴────────────────┘
+      ↓
+Final Response
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 🔧 Tech Stack
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+* **Node.js / TypeScript**
+* **NestJS**
+* **PostgreSQL + pgvector**
+* **Ollama (local LLM & embeddings)**
+* **Docker (optional)**
 
-```bash
-$ npm install -g mau
-$ mau deploy
+---
+
+## 🧩 Key Concepts Implemented
+
+### ✅ Semantic Search
+
+* Text chunking
+* Embedding generation
+* Vector similarity search using `pgvector`
+
+### ✅ Retrieval Pipeline
+
+* Top-K similarity search
+* Context building for LLM
+
+### ✅ Tool System
+
+* Encapsulated retrieval logic as a **tool**
+* Reusable and injectable (NestJS provider)
+
+### ✅ AI Agent
+
+* Uses LLM to decide:
+
+  * Answer directly
+  * OR call a tool
+
+### ✅ Adaptive RAG
+
+* Retrieval is **conditional**, not mandatory
+* Reduces unnecessary calls and improves efficiency
+
+---
+
+## 🛠️ How It Works
+
+### 1. Ingestion Pipeline
+
+* Documents are split into chunks
+* Each chunk is embedded
+* Stored in PostgreSQL with `pgvector`
+
+---
+
+### 2. Retrieval (Tool)
+
+```ts
+searchDocuments(query) → returns relevant chunks
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+### 3. Agent Decision
 
-Check out a few resources that may come in handy when working with NestJS:
+The LLM receives:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+* User question
+* Available tools
+* Instructions
 
-## Support
+And returns:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```json
+{
+  "tool": "searchDocuments",
+  "input": { "query": "..." }
+}
+```
 
-## Stay in touch
+or
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```json
+{
+  "answer": "..."
+}
+```
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### 4. Response Generation
+
+* If tool is used → RAG flow
+* If not → direct LLM response
+
+---
+
+## 📡 API
+
+### POST `/agent`
+
+```json
+{
+  "question": "How does JWT authentication work?"
+}
+```
+
+---
+
+### Example Response
+
+```json
+{
+  "usedTool": "searchDocuments",
+  "answer": "...",
+  "sources": [...]
+}
+```
+
+---
+
+## 🧪 Example Queries
+
+* "How does JWT work?"
+* "What is documented about authentication?"
+* "Which authentication method do you prefer?"
+
+---
+
+## 📦 Running Locally
+
+```bash
+# install dependencies
+npm install
+
+# run database (if using docker)
+docker-compose up -d
+
+# start app
+npm run start:dev
+```
+
+---
+
+## 🧠 Why This Project Matters
+
+This project demonstrates:
+
+* Moving beyond static RAG pipelines
+* Building **LLM-driven decision systems**
+* Designing **tool-based architectures**
+* Understanding **real-world AI system trade-offs**
+
+---
+
+## 🚀 Future Improvements
+
+* Multi-agent architecture (Planner, Retriever, Reviewer)
+* Tool registry with dynamic discovery
+* Evaluation & observability (tracing, metrics)
+* Hybrid search (keyword + vector)
+* Re-ranking strategies
+
+---
+
+## 👨‍💻 Author
+
+Developed as a hands-on exploration of modern AI system design, focusing on **practical, production-oriented patterns**.
+
+---
+
+## ⭐ Final Thoughts
+
+This is not just a chatbot.
+
+It is a **foundation for building real AI systems**, where:
+
+* LLMs reason
+* Tools act
+* Systems decide
+
+```
+```
