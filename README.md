@@ -1,8 +1,20 @@
-# 🤖 AI Agent with Adaptive RAG (Node.js + NestJS)
-<img width="600" src="https://wickedhorror.com/wp-content/uploads/2016/12/Gremlins.jpg" />
+# 🤖 AI Agent with Tool Calling & Adaptive RAG (Node.js + NestJS)
 
-# How to use it?
-## 1. Injest the data you have... (Indexing Data)
+An AI agent that dynamically decides whether to use Retrieval-Augmented Generation (RAG) or respond directly using an LLM.
+> ⚠️ This is not a static RAG pipeline — it's a decision-making system.
+
+## 🚀 Why This Project?
+
+Most RAG systems always retrieve context.
+
+This project introduces:
+
+- Conditional retrieval (Adaptive RAG)
+- Tool-based architecture
+- LLM-driven decision making
+
+## 🧪 Example: Why RAG Matters
+## 1. Ingest your data... (Indexing Data)
 >POST - Kukamont is a faraway, enchanted land...<br/>
 >POST - More than 1 million people are currently living in Kukamont...<br/>
 >POST - Kataplah is a very dangerous monster that lives in Kukamont...<br/>
@@ -15,37 +27,17 @@
 (AI Answer) - Kataplah does not seem to be a well-known figure, celebrity, or a character in popular culture. It is possible that it might be a misspelling, a pseudonym, or a reference to something specific. If you could provide more context about where you encountered the name \"Kataplah\", I may be able to give a more accurate response."
 ```
 
-The LLM used by the application did not recognize anything about the Kukamont city. That happened because it only searches for resources in LLM. 
-We'll need to explicitly prompt for the agent to use the information we've previously added. It'll trigger the decision to use the  RAG pipeline with a `searchDocument` tool (for semantic search).
-
+The LLM cannot answer because the information is not in its training data.
+To solve this, the agent uses a retrieval tool to access external knowledge via RAG.
 
 > [!TIP]
 >POST - Who's Kataplah? If you don't know, could you check the external docs?
 
 ```json
 {
-    "answer": {
-        "answer": " Based on the provided context from the Kukamont Docs, Kataplah is a very dangerous monster that lives in Kukamont.",
-        "usedTool": "searchDocuments",
-        "sources": [
-            {
-                "content": "Kataplah is a very dangerous monster that lives in Kukamont",
-                "title": "Kukamont Docs",
-                "distance": 18.622858321181024
-            },
-            {
-                "content": "Kukamont is a faraway, enchanted land",
-                "title": "Kukamont Docs",
-                "distance": 19.455843497299373
-            },
-            {
-                "content": "More than 1 million people are currently living in Kukamont.",
-                "title": "Kukamont Docs",
-                "distance": 20.51306703517183
-            }
-        ]
-    },
-    "usedTool": "searchDocuments"
+  "usedTool": "searchDocuments",
+  "answer": "Kataplah is a dangerous monster...",
+  "sources": [...]
 }
 ```
 
@@ -87,6 +79,17 @@ User Question
       ↓
 Final Response
 ```
+
+## 🧠 Design Decisions
+
+### Why adaptive RAG?
+Always retrieving data increases latency and cost. This system uses retrieval only when necessary.
+
+### Why tools?
+Tools allow the LLM to extend its capabilities beyond text generation.
+
+### Why not use frameworks like LangChain?
+This project implements core concepts manually to better understand how agent systems work internally.
 
 ---
 
@@ -264,9 +267,7 @@ This is not just a chatbot.
 
 It is a **foundation for building real AI systems**, where:
 
-* LLMs reason
-* Tools act
-* Systems decide
+> LLMs don't just generate text — they make decisions.
 
 ```
 ```
